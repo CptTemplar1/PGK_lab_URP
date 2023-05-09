@@ -2,13 +2,14 @@
 #
 # Get latest from https://github.com/github/gitignore/blob/main/Unity.gitignore
 #
-/[Ll]ibrary/
-/[Tt]emp/
-/[Oo]bj/
-/[Bb]uild/
-/[Bb]uilds/
-/[Ll]ogs/
-/[Uu]ser[Ss]ettings/
+/PGK_lab_URP/[Ll]ibrary/
+/PGK_lab_URP/[Tt]emp/
+/PGK_lab_URP/[Oo]bj/
+/PGK_lab_URP/[Bb]uild/
+/PGK_lab_URP/[Bb]uilds/
+/PGK_lab_URP/[Ll]ogs/
+/PGK_lab_URP/[Mm]emoryCaptures/
+/PGK_lab_URP/[Uu]ser[Ss]ettings/
 
 # MemoryCaptures can get excessive in size.
 # They also could contain extremely sensitive data
