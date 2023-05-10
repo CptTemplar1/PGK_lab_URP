@@ -2,63 +2,60 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
 
-namespace OccaSoftware.Buto
+[ExecuteAlways]
+public sealed class FogDensityMask : PlaceableObject
 {
-    [ExecuteAlways]
-    public sealed class FogDensityMask : ButoPlaceableObject
+
+    [SerializeField][Min(0)] private float densityMultiplier = 1;
+    public float DensityMultiplier
     {
-
-        [SerializeField][Min(0)] private float densityMultiplier = 1;
-        public float DensityMultiplier
+        get
         {
-            get
-            {
-                return densityMultiplier;
-            }
+            return densityMultiplier;
         }
+    }
 
 
-        [SerializeField][Min(0)] private float radius = 10;
-        public float Radius
+    [SerializeField][Min(0)] private float radius = 10;
+    public float Radius
+    {
+        get
         {
-            get
-            {
-                return radius;
-            }
+            return radius;
         }
+    }
 
 
-        public static void SortByDistance(Vector3 c)
-        {
-            fogVolumes = fogVolumes.OrderBy(x => x.GetSqrMagnitude(c)).ToList();
-        }
+    public static void SortByDistance(Vector3 c)
+    {
+        fogVolumes = fogVolumes.OrderBy(x => x.GetSqrMagnitude(c)).ToList();
+    }
 
-        private static List<FogDensityMask> fogVolumes = new List<FogDensityMask>();
-        public static List<FogDensityMask> FogVolumes
-        {
-            get { return fogVolumes; }
-        }
+    private static List<FogDensityMask> fogVolumes = new List<FogDensityMask>();
+    public static List<FogDensityMask> FogVolumes
+    {
+        get { return fogVolumes; }
+    }
 
-        protected override void Reset()
-        {
-            ButoCommon.CheckMaxFogVolumeCount(FogVolumes.Count, this);
-        }
+    protected override void Reset()
+    {
+        Common.CheckMaxFogVolumeCount(FogVolumes.Count, this);
+    }
 
 
-        protected override void OnEnable()
-        {
-            fogVolumes.Add(this);
-        }
+    protected override void OnEnable()
+    {
+        fogVolumes.Add(this);
+    }
 
-        protected override void OnDisable()
-        {
-            fogVolumes.Remove(this);
-        }
+    protected override void OnDisable()
+    {
+        fogVolumes.Remove(this);
+    }
 
-		private void OnDrawGizmosSelected()
-		{
-            Gizmos.color = Color.black;
-            Gizmos.DrawWireSphere(transform.position, Radius);
-		}
-	}
+    private void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.black;
+        Gizmos.DrawWireSphere(transform.position, Radius);
+    }
 }

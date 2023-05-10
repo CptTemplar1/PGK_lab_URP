@@ -47,7 +47,7 @@ MonoBehaviour:
     m_Value: 1
   maxDistanceVolumetric:
     m_OverrideState: 1
-    m_Value: 50
+    m_Value: 100
   analyticFogEnabled:
     m_OverrideState: 1
     m_Value: 0
