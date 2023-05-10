@@ -14,20 +14,4 @@ internal static class EditorCommon
         Selection.activeGameObject = go;
         return go;
     }
-
-    internal static void SetupLight(Light l)
-    {
-        l.type = LightType.Point;
-        l.bounceIntensity = 0;
-        l.shadows = LightShadows.None;
-    }
-
-    internal static void SetupLight(Light l, float intensity, Color color)
-    {
-        l.type = LightType.Point;
-        l.bounceIntensity = 0;
-        l.shadows = LightShadows.None;
-        l.intensity = intensity;
-        l.color = color;
-    }
 }

@@ -32,7 +32,7 @@ public class VolumetricFogRenderer : ScriptableRendererFeature
         #region Temporal AA
         private const string taaInputTexId = "_BUTO_HISTORY_TEX";
         private Material taaMaterial = null;
-        private const string taaShaderPath = "Shader Graphs/ButoTemporalAA";
+        private const string taaShaderPath = "Shader Graphs/TemporalAA";
         private RenderTargetHandle taaTarget;
 
         Dictionary<Camera, TAACameraData> renderTextures;
