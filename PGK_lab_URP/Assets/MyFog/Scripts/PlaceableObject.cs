@@ -4,7 +4,6 @@ using UnityEngine;
 
 public abstract class PlaceableObject : MonoBehaviour
 {
-
     protected abstract void Reset();
     protected abstract void OnEnable();
     protected abstract void OnDisable();
