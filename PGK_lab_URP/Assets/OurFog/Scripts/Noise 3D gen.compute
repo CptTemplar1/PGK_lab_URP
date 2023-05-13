@@ -1,10 +1,7 @@
 ﻿// Each #kernel tells which function to compile; you can have many kernels
 #pragma kernel CSMain
 
-// (Keijiro) This shader was slightly modified from the original version.
-// It's recommended to use the original version for other purposes.
 
-//
 // Description : Array and textureless GLSL 2D/3D/4D simplex
 //               noise functions.
 //      Author : Ian McEwan, Ashima Arts.
@@ -15,34 +12,39 @@
 //               https://github.com/ashima/webgl-noise
 //
 
+// Function to calculate the modulus of a float3 by 289
 float3 mod289(float3 x)
 {
     return x - floor(x * (1.0 / 289.0)) * 289.0;
 }
 
+// Function to calculate the modulus of a float4 by 289
 float4 mod289(float4 x) {
     return x - floor(x * (1.0 / 289.0)) * 289.0;
 }
 
+// Permutation function
 float4 permute(float4 x)
 {
     return mod289((x * 34.0 + 1.0) * x);
 }
 
+// Function for fast inverse square root approximation using Taylor series
 float4 taylorInvSqrt(float4 r)
 {
     return 1.79284291400159 - 0.85373472095314 * r;
 }
 
+// Simplex noise function
 float snoise(float3 v)
 {
     const float2 C = float2(1.0 / 6.0, 1.0 / 3.0);
 
-    // First corner
-    float3 i  = floor(v + dot(v, C.yyy));
-    float3 x0 = v   - i + dot(i, C.xxx);
+    // Calculate the position of the first corner
+    float3 i = floor(v + dot(v, C.yyy));
+    float3 x0 = v - i + dot(i, C.xxx);
 
-    // other corners
+    // Calculate the positions of other corners
     float3 g = step(x0.yzx, x0.xyz);
     float3 l = 1.0 - g;
     float3 i1 = min(g.xyz, l.zxy);
@@ -58,16 +60,16 @@ float snoise(float3 v)
     // Permutations
     i = mod289(i); // Avoid truncation effects in permutation
     float4 p =
-      permute(permute(permute(i.z + float4(0.0, i1.z, i2.z, 1.0))
-                            + i.y + float4(0.0, i1.y, i2.y, 1.0))
-                            + i.x + float4(0.0, i1.x, i2.x, 1.0));
+        permute(permute(permute(i.z + float4(0.0, i1.z, i2.z, 1.0))
+            + i.y + float4(0.0, i1.y, i2.y, 1.0))
+            + i.x + float4(0.0, i1.x, i2.x, 1.0));
 
     // Gradients: 7x7 points over a square, mapped onto an octahedron.
     // The ring size 17*17 = 289 is close to a multiple of 49 (49*6 = 294)
     float4 j = p - 49.0 * floor(p * (1.0 / 49.0));  // fmod(p,7*7)
 
     float4 x_ = floor(j * (1.0 / 7.0));
-    float4 y_ = floor(j - 7.0 * x_ );  // fmod(j,N)
+    float4 y_ = floor(j - 7.0 * x_);  // fmod(j,N)
 
     float4 x = x_ * (2.0 / 7.0) + 0.5 / 7.0 - 1.0;
     float4 y = y_ * (2.0 / 7.0) + 0.5 / 7.0 - 1.0;
@@ -81,7 +83,7 @@ float snoise(float3 v)
     //float4 s1 = float4(lessThan(b1, 0.0)) * 2.0 - 1.0;
     float4 s0 = floor(b0) * 2.0 + 1.0;
     float4 s1 = floor(b1) * 2.0 + 1.0;
-    float4 sh = -step(h, float4(0,0,0,0));
+    float4 sh = -step(h, float4(0, 0, 0, 0));
 
     float4 a0 = b0.xzyw + s0.xzyw * sh.xxyy;
     float4 a1 = b1.xzyw + s1.xzyw * sh.zzww;
@@ -108,47 +110,51 @@ float snoise(float3 v)
 }
 
 
-
+// Function to sample noises
 float sampleNoises(float3 vec) {
-  float multi = 0.5;
-  float f = 0;
-  for(int i = 0; i < 8; i++) {
-    f += multi*snoise( vec );
-    multi /= 2;
-    vec = vec*2.02;
-  }
-    
-  return f;
+    float multi = 0.5;
+    float f = 0;
+    for (int i = 0; i < 8; i++) {
+        f += multi * snoise(vec);
+        multi /= 2;
+        vec = vec * 2.02;
+    }
+
+    return f;
 }
 
-
+// Main compute shader function
 // Create a RenderTexture with enableRandomWrite flag and set it
 // with cs.SetTexture
-RWStructuredBuffer<float> Result;
-float size;
-float height;
-float seed;
-float noiseSize;
+RWStructuredBuffer<float> Result; // Output buffer
+float size; // Size of the render texture
+float height; // Height of the render texture
+float seed; // Seed value for the noise
+float noiseSize; // Size factor for the noise
 
-[numthreads(8,8,8)]
-void CSMain (uint3 id : SV_DispatchThreadID)
+[numthreads(8, 8, 8)]
+void CSMain(uint3 id : SV_DispatchThreadID)
 {
-    float halfSize = (size/2);
-    float halfHeight = (height/2);
+    float halfSize = (size / 2);
+    float halfHeight = (height / 2);
 
+    // Calculate offsets based on thread ID
     float xOffset = (id.x + halfSize) % size;
     float yOffset = (id.y + halfHeight) % height;
     float zOffset = (id.z + halfSize) % size;
 
+    // Calculate distances from center
     float xD = abs(id.x - halfSize) / halfSize;
     float yD = abs(id.y - halfHeight) / halfHeight;
     float zD = abs(id.z - halfSize) / halfSize;
 
-    float minD = min(min(xD,zD),yD);
-    float maxD = max(max(xD,zD),yD);
+    // Sample noise values with offsets and distances
+    float minD = min(min(xD, zD), yD);
+    float maxD = max(max(xD, zD), yD);
 
-    float noiseWithOffset = sampleNoises(float3(xOffset, yOffset,zOffset) * 0.01 * noiseSize + 1000 + seed) * minD;
+    float noiseWithOffset = sampleNoises(float3(xOffset, yOffset, zOffset) * 0.01 * noiseSize + 1000 + seed) * minD;
     float noise = sampleNoises(id.xyz * 0.01 * noiseSize + seed) * (1 - maxD);
 
+    // Store the final noise value in the output buffer
     Result[id.x + id.y * size + id.z * size * height] = noiseWithOffset + noise;
 }
