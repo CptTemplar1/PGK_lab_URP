@@ -1,121 +1,165 @@
-using UnityEngine;
 using System.Collections;
-using UnityEngine.UI;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class PlayerMovement : MonoBehaviour
 {
-    // Zmienne dotycz¹ce poruszania siê gracza w trybie normalnym i w sprincie
-    public float movementSpeed;
-    public float movementSprintSpeed;
-    private float currentMovementSpeed;
-    private bool doSprint = false;
-    private bool doRegenerate = false;
-    private int sprintEnergy = 50;
-    private int maxSprintEnergy = 50;
-    // Pasek sprintu
-    public GameObject sprintBarObject;
-    public Image sprintBar;
+    PlayerInput playerInput;
+    PlayerInput.MainActions input;
 
-    // Dowi¹zanie do obiektu przechowuj¹cego rotacjê kamery w osi Y
-    public Transform orientation;
+    CharacterController controller;
+    Animator animator;
 
-    // Zmienne przechowuj¹ce dane pobrane z osi poruszania - domyœlnie z klawiszy WASD
-    float horizontalInput;
-    float verticalInput;
+    [Header("Controller")]
+    public float moveSpeed = 5;
+    public float gravity = -9.8f;
+    public float jumpHeight = 1.2f;
 
-    // Komponent Rigidbody gracza
-    Rigidbody rgbody;
+    Vector3 playerVelocity;
+    bool isGrounded;
 
-    void Start()
+    [Header("Camera")]
+    public Camera cam;
+    public float sensitivity;
+
+    float xRotation = 0f;
+
+    [Header("Weapons")]
+    public GameObject rifle;
+    public GameObject sword;
+
+    void Awake()
     {
-        // Dowi¹zanie do komponentu Rigidbody obiektu gracza
-        rgbody = GetComponent<Rigidbody>();
- 
-        UpdateSprintBar();
+        controller = GetComponent<CharacterController>();
+        animator = GetComponentInChildren<Animator>();
+
+        playerInput = new PlayerInput();
+        input = playerInput.Main;
+        AssignInputs();
+
+        //wy³¹czenie kursora
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
     }
 
     void Update()
     {
-        // Pobranie danych z osi odpowiedzialnych za poruszanie gracza
-        horizontalInput = Input.GetAxisRaw("Horizontal");
-        verticalInput = Input.GetAxisRaw("Vertical");
-
-        // Tworzy wektor poruszania na bazie aktualnych danych z Rigidbody
-        Vector3 currentVelocity = new Vector3(rgbody.velocity.x, 0f, rgbody.velocity.z);
-
-        // Warunek okreœlaj¹cy, czy jest to zwyk³y ruch, czy sprint
-        if (Input.GetKey(KeyCode.LeftShift) && sprintEnergy > 0)
+        //Wybór miecza lub broni przy pomocy klawiszy 1 i 2
+        if (Input.GetKeyDown(KeyCode.Alpha1))
         {
-            // Warunek zapobiega wielu wywo³aniom metody naraz
-            if (!doSprint)
-                StartCoroutine(SprintCoroutine());
+            rifle.SetActive(false);
+            gameObject.GetComponent<PlayerAttack>().enabled = true;
+            sword.SetActive(true);
+        }
+        if (Input.GetKeyDown(KeyCode.Alpha2))
+        {
+            gameObject.GetComponent<PlayerAttack>().enabled = false;
+            sword.SetActive(false);
+            rifle.SetActive(true);
+        }
 
-            currentMovementSpeed = movementSprintSpeed;
+        isGrounded = controller.isGrounded;
+
+        // Repeat Inputs
+        if (input.Jump.IsPressed())
+        {
+            Jump();
+        }
+
+        SetAnimations();
+    }
+
+    void FixedUpdate()
+    {
+        MoveInput(input.Movement.ReadValue<Vector2>());
+    }
+
+    void LateUpdate()
+    {
+        LookInput(input.Look.ReadValue<Vector2>());
+    }
+
+    void MoveInput(Vector2 input)
+    {
+        Vector3 moveDirection = Vector3.zero;
+        moveDirection.x = input.x;
+        moveDirection.z = input.y;
+
+        controller.Move(transform.TransformDirection(moveDirection) * moveSpeed * Time.deltaTime);
+        playerVelocity.y += gravity * Time.deltaTime;
+        if (isGrounded && playerVelocity.y < 0)
+        {
+            playerVelocity.y = -2f;
+        }
+        controller.Move(playerVelocity * Time.deltaTime);
+    }
+
+    void LookInput(Vector2 input)
+    {
+        float mouseX = input.x;
+        float mouseY = input.y;
+
+        xRotation -= (mouseY * Time.deltaTime * sensitivity);
+        xRotation = Mathf.Clamp(xRotation, -80, 80);
+
+        cam.transform.localRotation = Quaternion.Euler(xRotation, 0, 0);
+
+        transform.Rotate(Vector3.up * (mouseX * Time.deltaTime * sensitivity));
+    }
+
+    void Jump()
+    {
+        // Adds force to the player rigidbody to jump
+        if (isGrounded)
+        {
+            playerVelocity.y = Mathf.Sqrt(jumpHeight * -3.0f * gravity);
+        }
+    }
+
+    void OnEnable()
+    {
+        input.Enable();
+    }
+
+    void OnDisable()
+    {
+        input.Disable();
+    }
+
+    // ---------- //
+    // ANIMATIONS //
+    // ---------- //
+
+    public const string IDLE = "Idle";
+    public const string WALK = "Walk";
+
+    string currentAnimationState;
+
+    public void ChangeAnimationState(string newState)
+    {
+        // STOP THE SAME ANIMATION FROM INTERRUPTING WITH ITSELF //
+        if (currentAnimationState == newState) return;
+
+        // PLAY THE ANIMATION //
+        currentAnimationState = newState;
+        animator.CrossFadeInFixedTime(currentAnimationState, 0.2f);
+    }
+
+    void SetAnimations()
+    {
+        if (playerVelocity.x == 0 && playerVelocity.z == 0)
+        {
+            ChangeAnimationState(IDLE);
         }
         else
         {
-            currentMovementSpeed = movementSpeed;
-        }
-
-        // Metoda wykonywana jest jeœli gracz stoi w miejscu, brakuje mu energii i nie jest ona regenerowana
-        if (currentVelocity == new Vector3(0, 0, 0) && sprintEnergy < maxSprintEnergy && !doRegenerate)
-            StartCoroutine(RegenerateEnergyCoroutine());
-
-        // Sprawzdanie, czy d³ugoœæ wektora (prêdkoœæ poruszania) nie przekracza maksymalnej ustalonej prêdkoœci
-        if (currentVelocity.magnitude > currentMovementSpeed)
-        {
-            // Jeœli prêdkoœæ przekracza maksymaln¹ to jest tworzony nowy wektor z aktualnymi danymi i maksymaln¹ prêdkoœci¹
-            Vector3 newVelocity = currentVelocity.normalized * currentMovementSpeed;
-            // Aktualizowane s¹ dane wektora poruszania w komponenecie Rigidbody
-            rgbody.velocity = new Vector3(newVelocity.x, rgbody.velocity.y, newVelocity.z);
+            ChangeAnimationState(WALK);
         }
     }
 
-    private void FixedUpdate()
+    void AssignInputs()
     {
-        // Tworzenie wektora ruchu
-        Vector3 moveDirection = orientation.forward * verticalInput + orientation.right * horizontalInput;
-
-        // Dodawanie do komponentu Rigidbody si³y w kierunku i zwrocie okreœlonym przez wektor ruchu
-        rgbody.AddForce(moveDirection.normalized * currentMovementSpeed * 10f, ForceMode.Force);
-    }
-
-    // Aktualizuje poziom wype³nienia i widocznoœæ paska sprintu
-    private void UpdateSprintBar()
-    {
-        // Ustala procentowy poziom wype³nienia paska sprintu
-        sprintBar.fillAmount = (float)sprintEnergy / (float)maxSprintEnergy;
-
-        // Wy³¹cza widocznoœæ paska sprintu, jeœli jest on wype³niony
-        if (sprintBar.fillAmount == 1)
-            sprintBarObject.SetActive(false);
-        else
-            sprintBarObject.SetActive(true);
-    }
-
-    // Metoda "zu¿ywaj¹ca" energiê gracza podczas sprintu
-    private IEnumerator SprintCoroutine()
-    {
-        doSprint = true;
-
-        yield return new WaitForSeconds(0.1f);
-
-        sprintEnergy--;
-        doSprint = false;
-        UpdateSprintBar();
-        //Debug.Log("Pozosta³a energia: " + sprintEnergy);
-    }
-
-    // Metoda regeneruj¹ca energiê gracza, jeœli gracz stoi w miejscu
-    private IEnumerator RegenerateEnergyCoroutine()
-    {
-        doRegenerate = true;
-
-        yield return new WaitForSeconds(0.1f);
-
-        sprintEnergy++;
-        doRegenerate = false;
-        UpdateSprintBar();
-        //Debug.Log("Pozosta³a energia: " + sprintEnergy);
+        input.Jump.performed += ctx => Jump();
     }
 }
