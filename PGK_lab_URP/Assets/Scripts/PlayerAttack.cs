@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using static UnityEditor.PlayerSettings;
 
 public class PlayerAttack : MonoBehaviour
 {
@@ -114,32 +115,8 @@ public class PlayerAttack : MonoBehaviour
         GameObject GO = Instantiate(hitEffect, pos, Quaternion.identity);
         //usuwanie efektu trafienia po 20 sekundach
         Destroy(GO, 20);
-        
 
-        //OBS£UGA ROZBRYZGU KRWI
-        // var randRotation = new Vector3(0, Random.value * 360f, 0);
-        // var dir = CalculateAngle(Vector3.forward, hit.normal);
-        float angle = Mathf.Atan2(pos.normalized.x, pos.normalized.z) * Mathf.Rad2Deg + 180;
-
-        //var effectIdx = Random.Range(0, BloodFX.Length);
-        if (effectIdx == BloodFX.Length) effectIdx = 0;
-
-        var instance = Instantiate(BloodFX[effectIdx], pos, Quaternion.Euler(0, angle + 90, 0));
-        effectIdx++;
-
-        var settings = instance.GetComponent<BFX_BloodSettings>();
-        //settings.FreezeDecalDisappearance = InfiniteDecal;
-
-        var attachBloodInstance = Instantiate(BloodAttach);
-        var bloodT = attachBloodInstance.transform;
-        bloodT.position = pos;
-        bloodT.localRotation = Quaternion.identity;
-        bloodT.localScale = Vector3.one * Random.Range(0.75f, 1.2f);
-        bloodT.LookAt(pos + pos.normalized, direction);
-        bloodT.Rotate(90, 0, 0);
-        //Destroy(attachBloodInstance, 20);
-
-        // if (!InfiniteDecal) Destroy(instance, 20);
+        SpawnBloodEffect(pos);
     }
 
     // ---------- //
@@ -164,14 +141,51 @@ public class PlayerAttack : MonoBehaviour
 
 
 
+    // --------------- //
+    // VOLUMETRIC BLOOD//
+    // --------------- //
 
     public bool InfiniteDecal;
-    public bool isVR = true;
     public GameObject BloodAttach;
     public GameObject[] BloodFX;
 
     public Vector3 direction;
     int effectIdx;
+
+    
+    //metoda spawnuj¹ca efekt krwi
+    void SpawnBloodEffect(Vector3 pos)
+    {
+        //OBS£UGA ROZBRYZGU KRWI
+        // var randRotation = new Vector3(0, Random.value * 360f, 0);
+        // var dir = CalculateAngle(Vector3.forward, hit.normal);
+        
+        //float angle = Mathf.Atan2(pos.normalized.x, pos.normalized.z) * Mathf.Rad2Deg + 180; //Wersja - krew rozbryzguje siê w ty³
+        float angle = Mathf.Atan2(pos.normalized.x, pos.normalized.z) * Mathf.Rad2Deg; //Wersja - krew rozbryzguje siê w przód
+
+        //var effectIdx = Random.Range(0, BloodFX.Length);
+        if (effectIdx == BloodFX.Length) effectIdx = 0;
+
+        var instance = Instantiate(BloodFX[effectIdx], pos, Quaternion.Euler(0, angle + 90, 0));
+        effectIdx++;
+
+        var settings = instance.GetComponent<BFX_BloodSettings>();
+        //settings.FreezeDecalDisappearance = InfiniteDecal;
+
+        var attachBloodInstance = Instantiate(BloodAttach);
+        var bloodT = attachBloodInstance.transform;
+        bloodT.position = pos;
+        bloodT.localRotation = Quaternion.identity;
+        bloodT.localScale = Vector3.one * Random.Range(0.75f, 1.2f);
+
+        //bloodT.LookAt(pos + pos.normalized, direction); //Wersja - krew rozbryzguje siê w ty³
+        bloodT.LookAt(pos - pos.normalized, direction); //Wersja - krew rozbryzguje siê w przód
+
+        bloodT.Rotate(90, 0, 0);
+        //Destroy(attachBloodInstance, 20);
+
+        // if (!InfiniteDecal) Destroy(instance, 20);
+    }
 
 
     Transform GetNearestObject(Transform hit, Vector3 hitPos)
