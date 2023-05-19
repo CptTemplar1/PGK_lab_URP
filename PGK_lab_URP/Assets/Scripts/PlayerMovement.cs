@@ -59,6 +59,28 @@ public class PlayerMovement : MonoBehaviour
             rifle.SetActive(true);
         }
 
+        ////ŒLADY KRWI
+        //if (Input.GetMouseButtonDown(0))
+        //{
+        //    var ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        //    RaycastHit hit;
+        //    if (Physics.Raycast(ray, out hit))
+        //    {
+        //        var nearestBone = GetNearestObject(hit.transform.root, hit.point);
+        //        if (nearestBone == null) return;
+
+        //        var attachedBloodInstance = Instantiate(attachedBloodDecal, nearestBone);
+        //        var bloodT = attachedBloodInstance.transform;
+        //        bloodT.position = hit.point;
+        //        bloodT.localRotation = Quaternion.identity;
+        //        bloodT.LookAt(hit.point + hit.normal, direction);
+        //        bloodT.Rotate(90, 0, 0);
+        //        Destroy(attachBloodInstance, 20);
+        //    }
+        //}
+
+
+
         isGrounded = controller.isGrounded;
 
         // Repeat Inputs
