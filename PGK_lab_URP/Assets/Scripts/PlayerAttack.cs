@@ -122,6 +122,7 @@ public class PlayerAttack : MonoBehaviour
         GameObject GO = Instantiate(hitEffect, pos, Quaternion.identity);
         //usuwanie efektu trafienia po 20 sekundach
         Destroy(GO, 20);
+
     }
 
     // ---------- //

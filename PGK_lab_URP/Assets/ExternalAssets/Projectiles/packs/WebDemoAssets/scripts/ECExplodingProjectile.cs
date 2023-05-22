@@ -93,7 +93,7 @@ public class ECExplodingProjectile : MonoBehaviour
             //zrespienie efektu krwi po trafieniu w obiekt o tagu Enemy
             if (hit.transform.CompareTag("Enemy"))
             {
-                SpawnBloodEffect(pos);
+                SpawnBloodEffect(pos, rot);
             }
 
             if (!explodeOnTimer && Missile == false)
@@ -161,7 +161,7 @@ public class ECExplodingProjectile : MonoBehaviour
 
 
     //metoda spawnująca efekt krwi
-    void SpawnBloodEffect(Vector3 pos)
+    void SpawnBloodEffect(Vector3 pos, Quaternion rot)
     {
         //OBSŁUGA ROZBRYZGU KRWI
         // var randRotation = new Vector3(0, Random.value * 360f, 0);
@@ -173,7 +173,8 @@ public class ECExplodingProjectile : MonoBehaviour
         //var effectIdx = Random.Range(0, BloodFX.Length);
         if (effectIdx == BloodFX.Length) effectIdx = 0;
 
-        var instance = Instantiate(BloodFX[effectIdx], pos, Quaternion.Euler(0, angle + 90, 0));
+        //var instance = Instantiate(BloodFX[effectIdx], pos, Quaternion.Euler(0, angle + 90, 0));
+        var instance = Instantiate(BloodFX[effectIdx], pos, rot);
         effectIdx++;
 
         var settings = instance.GetComponent<BFX_BloodSettings>();
