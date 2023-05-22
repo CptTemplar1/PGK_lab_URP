@@ -90,9 +90,12 @@ public class ECExplodingProjectile : MonoBehaviour
             Vector3 pos = hit.point;
             Instantiate(impactPrefab, pos, rot);
 
-            //zrespienie efektu krwi po trafieniu w obiekt
-            SpawnBloodEffect(pos);
-            
+            //zrespienie efektu krwi po trafieniu w obiekt o tagu Enemy
+            if (hit.transform.CompareTag("Enemy"))
+            {
+                SpawnBloodEffect(pos);
+            }
+
             if (!explodeOnTimer && Missile == false)
             {
                 Destroy(gameObject);

@@ -100,6 +100,13 @@ public class PlayerAttack : MonoBehaviour
         {
             HitTarget(hit.point);
 
+            //zrespienie efektu krwi po trafieniu w obiekt o tagu Enemy
+            if (hit.transform.CompareTag("Enemy"))
+            {
+                SpawnBloodEffect(hit.point);
+            }
+
+            //jeœli trafiony posiada obiekt Actor to zabierze mu ¿ycie
             if (hit.transform.TryGetComponent<Actor>(out Actor T))
             {
                 T.TakeDamage(attackDamage);
@@ -115,8 +122,6 @@ public class PlayerAttack : MonoBehaviour
         GameObject GO = Instantiate(hitEffect, pos, Quaternion.identity);
         //usuwanie efektu trafienia po 20 sekundach
         Destroy(GO, 20);
-
-        SpawnBloodEffect(pos);
     }
 
     // ---------- //
